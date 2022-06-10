@@ -1,0 +1,683 @@
+---
+title: "Project1code_Team9"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+```{r eval=FALSE}
+
+
+rm(list = ls())
+library(quantmod)
+library(lubridate)
+library(ggplot2)
+library(PerformanceAnalytics)
+library(writexl)
+library(xlsx)
+
+
+tickers <- c("SPY", "AAPL","AMGN","AXP","BA","CAT","CSCO","CVX", "DIS", "GS", 
+             "HD", "HON", "IBM","INTC","JNJ","JPM","KO","MCD","MMM","MRK", 
+             "MSFT","NKE","PG","TRV","UNH","VZ","WBA","WMT")
+
+
+getSymbols(tickers,from="1999-05-04", to="2020-12-31")
+
+retfun <- function(p) {
+  na.omit(log(p) - log(lag(p)))
+}
+
+P_merge <- merge(AAPL$AAPL.Adjusted,AMGN$AMGN.Adjusted,AXP$AXP.Adjusted,
+          BA$BA.Adjusted,CAT$CAT.Adjusted,CSCO$CSCO.Adjusted,CVX$CVX.Adjusted, DIS$DIS.Adjusted, 
+          GS$GS.Adjusted, HD$HD.Adjusted, HON$HON.Adjusted, IBM$IBM.Adjusted,INTC$INTC.Adjusted,
+          JNJ$JNJ.Adjusted,JPM$JPM.Adjusted,KO$KO.Adjusted,MCD$MCD.Adjusted,MMM$MMM.Adjusted,
+          MRK$MRK.Adjusted, MSFT$MSFT.Adjusted,NKE$NKE.Adjusted,PG$PG.Adjusted,TRV$TRV.Adjusted,
+          UNH$UNH.Adjusted,VZ$VZ.Adjusted,WBA$WBA.Adjusted,WMT$WMT.Adjusted)
+
+names(P_merge) <- c("AAPL","AMGN","AXP","BA","CAT","CSCO","CVX", "DIS", "GS", 
+              "HD", "HON", "IBM","INTC","JNJ","JPM","KO","MCD","MMM","MRK", 
+              "MSFT","NKE","PG","TRV","UNH","VZ","WBA","WMT")
+
+P_Smerge <- merge(SPY$SPY.Adjusted,AAPL$AAPL.Adjusted,AMGN$AMGN.Adjusted,AXP$AXP.Adjusted,
+                  BA$BA.Adjusted,CAT$CAT.Adjusted,CSCO$CSCO.Adjusted,CVX$CVX.Adjusted, DIS$DIS.Adjusted, 
+                  GS$GS.Adjusted, HD$HD.Adjusted, HON$HON.Adjusted, IBM$IBM.Adjusted,INTC$INTC.Adjusted,
+                  JNJ$JNJ.Adjusted,JPM$JPM.Adjusted,KO$KO.Adjusted,MCD$MCD.Adjusted,MMM$MMM.Adjusted,
+                  MRK$MRK.Adjusted, MSFT$MSFT.Adjusted,NKE$NKE.Adjusted,PG$PG.Adjusted,TRV$TRV.Adjusted,
+                  UNH$UNH.Adjusted,VZ$VZ.Adjusted,WBA$WBA.Adjusted,WMT$WMT.Adjusted)
+
+
+names(P_Smerge) <- c("SPY","AAPL","AMGN","AXP","BA","CAT","CSCO","CVX", "DIS", "GS", 
+                     "HD", "HON", "IBM","INTC","JNJ","JPM","KO","MCD","MMM","MRK", 
+                     "MSFT","NKE","PG","TRV","UNH","VZ","WBA","WMT")
+
+P_Smerge
+
+
+
+
+# 1. compute an absolute summary table
+
+R_merge <- retfun(P_merge)
+R_merge
+
+R_Smerge <- retfun(P_Smerge)
+R_Smerge
+
+length(R_merge)
+
+
+# Return
+R_mean <- sapply(R_merge,mean)
+R_mean <- R_mean*252
+R_mean
+
+
+ReturnP <- mean(R_mean)
+ReturnP
+
+maxR <- max(R_mean)
+maxR
+
+minR <- min(R_mean)
+minR
+
+# The return for the total 27 stock is 0.0872566
+# The maximum return of 27 is APPL, 0.2737993
+# The minimum return of 27 is IBM, 0.0284023
+
+
+# Volatility
+
+R_vol <- sapply(R_merge, sd)
+R_vol <- R_vol *sqrt(252)
+R_vol
+
+VolP <- mean(R_vol)
+VolP
+
+maxV <- max(R_vol)
+maxV
+
+minV <- min(R_vol)
+minV
+
+# The Volatility for the total 27 stock is 0.305511
+# The maximum volatility of 27 is APPL, 0.4276851
+# The minimum return of 27 is JNJ, 0.1999195
+
+RVtable <- rbind(R_mean, R_vol)
+RVtable
+
+SR <- RVtable[1,]/RVtable[2,]
+SR
+
+
+
+mean(SR)
+max(SR)
+min(SR)
+
+# The sharpe ratio, mean is 0.2862855, max is 0.6401888(AAPL), min is 0.09318222(CSCO)
+
+
+
+#2. Plot the asset mean return against their volatilities. Provide couple insights
+
+plot(R_vol,R_mean,xlab="Volatility",ylab="Mean",xlim=c(0.18,0.45),ylim=c(0.02,0.3),cex=0.1)
+text(R_vol,R_mean, labels=names(R_mean),cex=0.5)
+
+R_SPY <- mean(R_Smerge[,1])*252
+sig_SPY <- sd(R_Smerge[,1])*sqrt(252)
+
+points(sig_SPY,R_SPY, cex=0.1)
+text(sig_SPY,R_SPY, labels="SPY",cex=0.5,col="red")
+
+SR
+
+lamda <- seq(0,3,length=301)
+lamda
+
+vol_spyline <- lamda*sig_SPY
+vol_spyline
+
+mean_spyline <- lamda*R_SPY
+mean_spyline
+
+lines(vol_spyline,mean_spyline,type="l",lty=2,col="red")
+
+cor(R_mean,R_vol)
+
+#3.Risk-Adjusted Performance Measurement
+
+# 1)&2) Jensen's alpha, Market beta
+
+reg_alpha <- function(x,R_merge){
+  coefficients(lm(R_merge[,x] ~ R_Smerge[,1]))
+}
+
+reg <- reg_alpha(1:27,R_merge)
+reg
+
+mean(reg[1,])*252
+mean(reg[2,])
+max(reg[1,])*252
+max(reg[2,])
+min(reg[1,])*252
+min(reg[2,])
+
+# Jensen's alpha
+# mean is 0.02551951, max is 0.1997508(AAPL), min is -0.04687026(CSCO)
+
+# Market beta
+# mean is 0.9375491, max is 1.451957(JPM), min is 0.5200475(PG)
+
+
+# 3) TR
+
+R_mean
+TR <- R_mean/reg[2,]
+TR
+mean(TR)
+
+TR_mean <- mean(TR)
+TR_mean
+
+TR_max <- max(TR)
+TR_max
+
+TR_min <- min(TR)
+TR_min
+
+# The mean of TR is 0.09859376, max is 0.2434959(APPL), min is 0.02854956(CSCO)
+
+
+# 4) Tracking error
+
+Stock_SPY <- R_merge
+
+for (i in 1:27) {
+  
+  Stock_SPY[,i] <- R_merge[,i] - R_Smerge[,1] 
+
+  }
+
+te <- sapply(Stock_SPY,sd)
+te <- te*sqrt(252)
+
+te
+mean(te)
+max(te)
+min(te)
+
+# The mean of Tracking error is 0.01554043, max is 0.02304837(AAPL), min is 0.01151148(MMM)
+
+
+# 5) Information Ratio (IR)
+
+IR <- (R_mean-R_SPY)/te
+IR
+
+mean(IR)
+max(IR)
+min(IR)
+
+# The mean of Information Ratio is 0.07579525, max is 0.568343(AAPL), min is -0.1780899(IBM)
+
+#4. CAPM
+
+# 1)
+R_mean
+beta <- reg[2,]
+lamda
+mean_spyline
+
+plot(beta,R_mean,type="p",cex=0.01, ylab="Return")
+
+text(beta,R_mean, labels=names(R_mean),cex=1)
+
+
+# 2)
+points(1.4,0.06,type="p",cex=17, col="red")
+
+beta["JPM"]
+R_mean["JPM"]
+
+beta["GS"]
+R_mean["GS"]
+
+beta["AXP"]
+R_mean["AXP"]
+
+
+# 2.1
+
+In <- R_merge[4446:4947,]
+Out <- R_merge[4948:5451,]
+Mark <- R_Smerge[4948:5451,1]
+
+
+# 2.2
+
+In_vol <- sapply(In,sd)*sqrt(252)
+In_vol
+
+In_ret <- sapply(In,mean)*252
+In_ret
+
+In_sr <- In_ret/In_vol
+In_sr
+
+# Return
+
+Out_ret <- sapply(Out,mean)*252
+Out_ret
+
+
+#1) Port1
+
+In_vol_inv <- 1/In_vol^2
+In_vol_inv
+
+sum(In_vol_inv)
+
+w1 <- In_vol_inv/sum(In_vol_inv)
+  w1*100
+  sum(w1)
+
+
+#Return on W1 portfolio is 0.141243
+sum(w1*Out_ret)
+
+
+#2) Port2
+
+w2 <- In_sr/sum(In_sr)
+w2*100
+sum(w2)
+
+#Return on W2 portfolio is 0.1654284
+w2*Out_ret
+sum(w2*Out_ret)
+
+
+#3) Port3
+
+w3 <- seq(1,1,length.out=27)
+w3 <- w3*(1/27)
+w3
+sum(w3)
+
+#Return on W3 portfolio is 0.1415061
+
+w3*Out_ret
+sum(w3*Out_ret)
+
+
+#3. Plot & CAPM
+
+
+# Cumulative return of SPY
+
+
+head(R_Smerge[,1])
+R_SPY1920 <- R_Smerge["2019-01-01/2020-12/31"][,1]
+head(R_SPY1920)
+tail(R_SPY1920)
+
+C_SPY1920 <- R_SPY1920
+class(C_SPY1920)
+
+c(C_SPY1920)
+
+for (i in 2:504) {
+
+    C_SPY1920[i] <- C_SPY1920[i] + lag(C_SPY1920)
+    
+    } 
+
+C_SPY1920
+head(C_SPY1920)
+tail(C_SPY1920)
+
+plot(C_SPY1920)
+
+# Cumulative return of W1,w2,w3 Portfolio
+
+R_w1 <- t(t(Out) * w1)
+R_w2 <- t(t(Out) * w2)
+R_w3 <- t(t(Out) * w3) 
+
+
+Portw1 <- Out
+Portw2 <- Out
+Portw3 <- Out
+
+R_Portw1 <- Out[,1]
+R_Portw2 <- Out[,2]
+R_Portw3 <- Out[,3]
+
+names(R_Portw1) <- c("Portw1")
+names(R_Portw2) <- c("Portw2")
+names(R_Portw3) <- c("Portw3")
+
+
+for (i in 1:504) {
+  for (j in 1:27) {
+    Portw1[i,j] <- Out[i,j]*w1[j]
+    Portw2[i,j] <- Out[i,j]*w2[j]
+    Portw3[i,j] <- Out[i,j]*w3[j]
+  }
+  }
+
+for (i in 1:504) {
+  R_Portw1[i] <- sum(Portw1[i,1:27])
+  R_Portw2[i] <- sum(Portw2[i,1:27])
+  R_Portw3[i] <- sum(Portw3[i,1:27])
+}
+
+
+C_Portw1 <- R_Portw1
+C_Portw2 <- R_Portw2
+C_Portw3 <- R_Portw3
+
+  
+for (i in 2:504) {
+    
+    C_Portw1[i] <- C_Portw1[i] + lag(C_Portw1)
+    C_Portw2[i] <- C_Portw2[i] + lag(C_Portw2)
+    C_Portw3[i] <- C_Portw3[i] + lag(C_Portw3)
+    
+  } 
+
+# Plot SPY, W1, W2 and W3
+
+plot(C_SPY1920,ylab = "Cumulative Return" , title = "Return")
+lines(C_Portw1,col="red")
+lines(C_Portw2,col="green")
+lines(C_Portw3,col="blue")
+
+
+
+# CAPM
+
+capmw1 <- lm(R_Portw1~R_SPY1920)
+252*capmw1$coefficients
+capmw1$coefficients
+
+CAPMw1 <- table.CAPM(R_Portw1,R_SPY1920)
+CAPMw1
+
+SR_w1 <- mean(R_Portw1)*sqrt(252)/sd(R_Portw1)
+SR_w1
+
+capmw2 <- lm(R_Portw2~R_SPY1920)
+capmw2$coefficients
+capmw2$coefficients*252
+
+CAPMw2 <- table.CAPM(R_Portw2,R_SPY1920)
+CAPMw2
+
+SR_w2 <- mean(R_Portw2)*sqrt(252)/sd(R_Portw2)
+SR_w2
+
+capmw3 <- lm(R_Portw3~R_SPY1920)
+capmw3$coefficients
+capmw3$coefficients*252
+
+CAPMw3 <- table.CAPM(R_Portw3,R_SPY1920)
+CAPMw3
+
+SR_w3 <- mean(R_Portw3)*sqrt(252)/sd(R_Portw3)
+SR_w3
+
+# W1 Port : SR is 0.5494398, beta is 0.9793, Jensen's alpha is -0.0692
+# W2 Port : SR is 0.6100441, beta is 1.0349, Jensen's alpha is -0.0579
+# W3 Port : SR is 0.5319499, beta is 1.0183, Jensen's alpha is -0.0769
+
+mean(R_SPY1920)*252
+mean(R_Portw1)*252
+mean(R_Portw2)*252
+mean(R_Portw3)*252
+
+sd(R_SPY1920)*sqrt(252)
+sd(R_Portw1)*sqrt(252)
+sd(R_Portw2)*sqrt(252)
+sd(R_Portw3)*sqrt(252)
+
+SR_SPY <- mean(R_SPY1920)*sqrt(252)/sd(R_SPY1920)
+SR_SPY
+
+
+# 4. Value at Risk and Stress Testing
+
+# Task 1
+# 1. Table of mean and standard deviation
+
+m1 <- mean(R_Portw1)*252
+m2 <- mean(R_Portw2)*252
+m3 <- mean(R_Portw3)*252
+
+# The mean of Portfolio w1,w2,w3 in OUT period is respectively 0.141243, 0.1654283 and 0.1415061
+
+sd1 <- sd(R_Portw1)*sqrt(252)
+sd2 <- sd(R_Portw2)*sqrt(252)
+sd3 <- sd(R_Portw3)*sqrt(252)
+
+# The standard deviation of Portfolio w1,w2,w3 in OUT period is respectively 0.2570674, 0.2711744, 0.2660139
+
+mu1 <- mean(R_Portw1)*252 + 0.5*var(R_Portw1)*252
+mu2 <- mean(R_Portw2)*252 + 0.5*var(R_Portw2)*252
+mu3 <- mean(R_Portw3)*252 + 0.5*var(R_Portw3)*252
+
+# The mu of Portfolio w1,w2,w3 in OUT period is respectively 0.1742848, 0.2021961 and 0.1768878
+
+
+# 2. GMB plot
+
+
+F0 = 100
+gbm_path <- function(N,m,sig){
+  R_T <- rnorm(N,m,sig)
+  F_T <- F0 * exp(R_T)
+  
+  return(F_T)
+}
+
+gbmpw1 <- gbm_path(1000,m1,sd1)
+gbmpw2 <- gbm_path(1000,m2,sd2)
+gbmpw3 <- gbm_path(1000,m3,sd3)
+
+
+hist(gbmpw1)
+hist(gbmpw2)
+hist(gbmpw3)
+
+boxplot(gbmpw1)
+boxplot(gbmpw2)
+boxplot(gbmpw3)
+
+# 3. Expected value of each portfolio one year from now
+
+mean(gbmpw1)
+mean(gbmpw2)
+mean(gbmpw3)
+
+# 4. Var(0.05)
+
+mean(gbmpw1) - percentile(gbmpw1,0.05)
+mean(gbmpw2) - quantile(gbmpw2,0.05)
+mean(gbmpw3) - quantile(gbmpw3,0.05)
+
+
+# The Var of the portfolio 1,2,3 is respectively 41.36982, 46.80853 and 45.24295
+
+# Task 2
+
+CAPMw1
+CAPMw2
+CAPMw3
+
+# The beta of the portfolios is respectively 0.9793, 1.0349 and 1.0183
+
+sdM <- sd(R_SPY1920)*sqrt(252)
+
+
+# The market volatility is 0.254079
+
+newsd1 <- 0.9793 * sdM* 0.1 + sd1
+newsd2 <- 1.0349 * sdM* 0.1 + sd2
+newsd3 <- 1.0183 * sdM* 0.1 + sd3
+
+newsd1
+newsd2
+newsd3
+
+newgbmpw1 <- gbm_path(1000,m1,newsd1)
+newgbmpw2 <- gbm_path(1000,m2,newsd2)
+newgbmpw3 <- gbm_path(1000,m3,newsd3)
+
+mean(newgbmpw1) - quantile(newgbmpw1,0.05)
+mean(newgbmpw2) - quantile(newgbmpw2,0.05)
+mean(newgbmpw3) - quantile(newgbmpw3,0.05)
+
+
+# The Var(0.05) of the portfolio 1,2,3 is 47.94507, 51.78218 and 50.45759
+
+
+
+# Question 5. 
+
+
+# Covariance Matrix for 27 stocks
+
+
+df_return= data.frame(R_merge)
+df_return
+covM <- cov(df_return)*252
+covM
+
+# inverse of covariance matrix 
+invcovM <- solve(covM)
+
+# check that it is I matrix0
+invcovM %*% covM
+
+
+# Finding w0
+
+I1 <- c(rep(1,27))
+matrix(I1)
+
+# w0's numerator
+w0n <- invcovM %*% matrix(I1)
+w0n
+sum(w0n)
+
+
+# w0's denominator
+w0d <- I1 %*% invcovM %*% matrix(I1)
+w0d
+
+w0d
+
+w0 <- t(w0n) / c(w0d)
+w0
+sum(w0)
+
+
+# B
+I27 <- diag(27)
+I27
+B <- invcovM %*% (I27 - (matrix(I1) %*% w0))
+B
+
+Bmu <- B %*% R_mean
+Bmu
+
+w <- matrix(0,ncol=100, nrow=27)
+w
+
+for (i in 1:100){
+  
+  w[,i] <- t(w0) + Bmu/i
+}
+
+w
+
+rownames(w) <- c("AAPL","AMGN","AXP","BA","CAT","CSCO","CVX", "DIS", "GS", 
+                 "HD", "HON", "IBM","INTC","JNJ","JPM","KO","MCD","MMM","MRK", 
+                 "MSFT","NKE","PG","TRV","UNH","VZ","WBA","WMT")
+
+w
+
+wmean <- matrix(0,ncol=100)
+wmean
+wsigma <- matrix(0,ncol=100)
+wsigma
+
+sqrt(t(w[,3]) %*% covM %*% w[,3])
+
+for (i in 1:100){
+  wmean[i] <- sum(w[,i] * R_mean)
+  wsigma[i] <- sqrt(t(w[,i]) %*% covM %*% w[,i]) 
+}
+
+
+plot(wmean~wsigma,type="l",xlim=c(-0.1,1),ylim=c(-0.1,1))
+
+#2. Highlight maximum SR and GMV portfolio
+
+wSR <- wmean/wsigma
+wSR
+
+maxSR <- which.max(wSR)
+maxSR
+
+w0_mean <- sum(w0*R_mean)
+w0_sigma <- sqrt(w0 %*% covM %*% t(w0))
+
+rf=0
+
+points(wmean[maxSR]~wsigma[maxSR],type="p",col="red",cex=1.5)
+legend(wmean[maxSR]~wsigma[maxSR]+0.03,legend=c("SR max "), col="red",box.lty = 1)
+
+#points(wmean[100]~wsigma[100],type="p",col="blue",cex=1.5)
+points(w0_mean~w0_sigma,type="p",col="green",cex=1.5)
+legend(w0_mean~w0_sigma+0.03,legend=c("GMV "))
+
+points(0,0,type="p",col="black",cex=1.5)
+legend(-0.1,0.2,legend=c("Risk free "))
+
+lamda <- seq(-1,1,length=201)
+lamda
+
+wsr <- w[,3]
+wsr
+
+
+
+
+w0mvef_mean <- w0_mean*lamda + wmean[3]*(1-lamda)
+w0mvef_mean
+
+w0mvef_sigma <- c(w0_sigma)*lamda + c(wsigma[3])*(1-lamda)
+w0mvef_sigma
+
+lines(w0mvef_sigma,w0mvef_mean,type="l",lty=2,col="red")
+
+wfmvef_mean <- wmean[3]*(1-lamda)
+wfmvef_mean
+
+wfmvef_sigma <- c(wsigma[3])*(1-lamda)
+wfmvef_sigma
+
+lines(wfmvef_sigma,wfmvef_mean,type="l",lty=2,col="blue")
+line(wfmvef_sigma,wfmvef_mean)
+
+
+```
